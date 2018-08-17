@@ -11,5 +11,6 @@ pod 'Fabric'
 pod 'Crashlytics'
 pod 'FontAwesomeIconFactory'
 pod 'Firebase/Core'
+pod 'SVProgressHUD'
 
 end

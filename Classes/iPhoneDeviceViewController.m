@@ -20,6 +20,7 @@
 #import "WikiVC.h"
 #import "Video.h"
 #import "Utility.h"
+#import "SVProgressHUD.h"
 
 @implementation iPhoneDeviceViewController
 
@@ -327,7 +328,7 @@ heightForHeaderInSection:(NSInteger)section {
      } else if (section == 4) {
           count = [self.videos count];
      }
-     if ([self.guides count] == 0 && [self.cats count] == 0 && [self.wikis count] == 0 && [self.docs count] && [self.videos count] == 0 && section==0) {
+     if ([self.guides count] == 0 && [self.cats count] == 0 && [self.wikis count] == 0 && [self.docs count] == 0 && [self.videos count] == 0 && section==0) {
           return 40.0;
      } else if (count == 0) {
           return 0.0;
@@ -431,17 +432,25 @@ heightForHeaderInSection:(NSInteger)section {
           NSURL* destinationUrl = [documentsUrl URLByAppendingPathComponent:self.docs[indexPath.row][@"filename"]];
 
           NSError* err = nil;
-          NSData* fileData = [[NSData alloc] initWithContentsOfURL:url options:NSDataReadingUncached error:&err];
-          if (!err && fileData && fileData.length && [fileData writeToURL:destinationUrl atomically:true]) {
-
-               UIDocumentInteractionController* document = [UIDocumentInteractionController interactionControllerWithURL:destinationUrl];
-              // [UINavigationBar appearance].tintColor = [UIColor blueColor];
-
-  //             document.UTI = @"com.adobe.pdf"; //@"public.jpeg";
-               document.delegate = self;
-               document.name = @"";
-               [document presentPreviewAnimated:YES];
-          }
+          [SVProgressHUD show];
+          
+          dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+               NSData* fileData = [[NSData alloc] initWithContentsOfURL:url options:NSDataReadingUncached error:&err];
+               dispatch_async(dispatch_get_main_queue(), ^{
+                    if (!err && fileData && fileData.length && [fileData writeToURL:destinationUrl atomically:true]) {
+                         
+                         UIDocumentInteractionController* document = [UIDocumentInteractionController interactionControllerWithURL:destinationUrl];
+                         // [UINavigationBar appearance].tintColor = [UIColor blueColor];
+                         
+                         //             document.UTI = @"com.adobe.pdf"; //@"public.jpeg";
+                         document.delegate = self;
+                         document.name = @"";
+                         [document presentPreviewAnimated:YES];
+                    }
+                    [SVProgressHUD dismiss];
+               });
+          });
+          
      }
 }
 
@@ -449,21 +458,27 @@ heightForHeaderInSection:(NSInteger)section {
 
 - (void)documentInteractionControllerDidEndPreview:(UIDocumentInteractionController *)controller {
      [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleLightContent];
+     
+     [SVProgressHUD dismiss];
 }
 
 - (void)documentInteractionControllerDidDismissOptionsMenu:(UIDocumentInteractionController *)controller {
+     [SVProgressHUD dismiss];
 }
 
 - (UIViewController *)documentInteractionControllerViewControllerForPreview:(UIDocumentInteractionController *)controller {
+     [SVProgressHUD dismiss];
      return self;
 }
 
 - (UIView *)documentInteractionControllerViewForPreview:(UIDocumentInteractionController *)controller {
      [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleDefault];
+     [SVProgressHUD dismiss];
     return self.view;
 }
 
 - (CGRect)documentInteractionControllerRectForPreview:(UIDocumentInteractionController *)controller {
+     [SVProgressHUD dismiss];
      return self.view.frame;
 }
 
